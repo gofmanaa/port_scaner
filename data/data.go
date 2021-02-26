@@ -15,3 +15,12 @@ func (s *Set) Add(data interface{}) {
 func (s *Set) Delete(data interface{}) {
 	delete(s.set, data)
 }
+
+func (s * Set) GetInt() ([]int) {
+	res := []int{}
+	for  key := range s.set {
+		res = append(res, key.(int))
+	}
+
+	return res
+}

@@ -4,15 +4,16 @@ import (
 	"flag"
 	"fmt"
 	"net"
+	"runtime"
 	"strconv"
 	"sync"
-	"github.com/gofmanaa/port_scanertest/data"
 	"time"
+	"github.com/gofmanaa/port_scanner/data"
 )
 
 var address string
 
-const ttl = 2000
+const ttl = 500
 
 func init() {
 	flag.StringVar(&address, "addr", "localhost", "Host name")
@@ -20,7 +21,10 @@ func init() {
 
 func main() {
 	flag.Parse()
-	scanPorts(address)
+	out := make(chan int, 100)
+
+	scanPorts(address, out)
+	getChanel(out)
 }
 
 func isOpenPort(address string, port int) bool {
@@ -35,23 +39,35 @@ func isOpenPort(address string, port int) bool {
 	return true
 }
 
-func scanPorts(address string) {
+func scanPorts(address string, out chan int) {
 	var wg sync.WaitGroup
-	res := data.NewSet()
-	for port := 1; port < 1<<16; port++ {
-		wg.Add(1)
-		startScan(address, port, &wg, res)
-	}
 
+	wg.Add(1)
+	go startScan(address, &wg, out)
+
+	gorutines := runtime.NumGoroutine()
+	fmt.Println("gorut: ", gorutines)
 	wg.Wait()
-	fmt.Println(*res)
 }
 
-func startScan(address string, port int, wg *sync.WaitGroup, out *data.Set) {
-	if isOpenPort(address, port) {
-		out.Add(port)
-		fmt.Printf("Port %d open\n", port)
+func startScan(address string, wg *sync.WaitGroup, out chan int) {
+	for port := 1; port < 1<<16; port++ {
+		if isOpenPort(address, port) {
+			out <- port
+		}
+	}
+	close(out)
+	wg.Done()
+}
+
+func getChanel(in <-chan int) *data.Set {
+	res := data.NewSet()
+
+	for openPort := range in {
+		res.Add(openPort)
+		fmt.Printf("Port %d open\n", openPort)
 	}
 
-	wg.Done()
+	fmt.Println(*res)
+	return res
 }
