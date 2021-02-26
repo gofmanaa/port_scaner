@@ -3,12 +3,12 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/gofmanaa/port_scanner/data"
 	"net"
 	"runtime"
 	"strconv"
 	"sync"
 	"time"
-	"github.com/gofmanaa/port_scanner/data"
 )
 
 var address string
