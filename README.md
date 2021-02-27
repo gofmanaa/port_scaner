@@ -1,8 +1,15 @@
 # port_scanner
-Port scanner for target host
+Simple port scanner for target host.
 
-## usage 
+## Usage 
 ```$ make build```
 ```./port_scanner.o [-addr hostname]``` 
 
 Default hostname is localhost
+
+Example uotput:
+```
+Start sacanning...
+CpuNum:  6
+Port 8080 [open]
+Done.
