@@ -3,7 +3,8 @@ Simple port scanner for target host.
 
 ## Usage 
 ```$ make build```
-```./port_scanner.o [-addr hostname]``` 
+
+```$ ./port_scanner.o [-addr hostname]``` 
 
 Default hostname is localhost
 
