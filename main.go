@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net"
 	"runtime"
-	"strconv"
 	"sync"
 	"time"
 
@@ -29,8 +28,16 @@ func main() {
 	runtime.GOMAXPROCS(cpus)
 
 	fmt.Println("CpuNum: ", cpus)
+	var wg sync.WaitGroup
 
-	scanPorts(address, ch)
+	for port := 1; port < 1<<16; port++ {
+		wg.Add(1)
+		go startScan(address, port, &wg, ch)
+	}
+
+	wg.Wait()
+	close(ch)
+
 	openPortsMap := getChanel(ch)
 	openPorts := openPortsMap.GetInt()
 
@@ -45,33 +52,21 @@ func main() {
 }
 
 func isOpenPort(address string, port int) bool {
-	address = address + ":" + strconv.Itoa(port)
+	address = fmt.Sprintf("%s:%d", address, port)
 	con, err := net.DialTimeout("tcp", address, time.Second*ttl)
-	if err != nil {
-		return false
+	if err == nil {
+		_ = con.Close()
+		return true
 	}
 
-	con.Close()
-
-	return true
+	return false
 }
 
-func scanPorts(address string, out chan int) {
-	var wg sync.WaitGroup
-
-	wg.Add(1)
-	go startScan(address, &wg, out)
-
-	wg.Wait()
-}
-
-func startScan(address string, wg *sync.WaitGroup, out chan int) {
-	for port := 1; port < 1<<16; port++ {
-		if isOpenPort(address, port) {
-			out <- port
-		}
+func startScan(address string, port int, wg *sync.WaitGroup, out chan int) {
+	if isOpenPort(address, port) {
+		out <- port
 	}
-	close(out)
+
 	wg.Done()
 }
 
